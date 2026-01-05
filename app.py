@@ -112,7 +112,7 @@ st.markdown("""
 <div class="waybar-header">
     <div class="dots"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div>
     <div class="window-title"> ~/arch/vault/encryptor.sh</div>
-    <div class="arch-logo">HYPR</div>
+    <div class="arch-logo">hyp.enc</div>
 </div>
 """, unsafe_allow_html=True)
 
