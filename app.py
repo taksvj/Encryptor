@@ -71,8 +71,8 @@ st.markdown("""
     /* 5. Input Fields */
     .stTextArea > div > div > textarea {
         background-color: #050000 !important; 
-        color: var(--red-glow) !important;
-        border: 1px solid var(--red-dark) !important;
+        color: #f00 !important;
+        border: 1px solid #411 !important;
         font-family: 'Consolas', monospace;
         font-size: 1.1rem;
     }
@@ -136,36 +136,44 @@ st.markdown("""
 </script>
 """, unsafe_allow_html=True)
 
-# --- LOGIKA ENKRIPSI ---
+# --- LOGIKA ENKRIPSI (BUG FIX HERE) ---
 def process_text(text, method, mode):
     try:
         if mode == "ENCRYPT":
+            # Saat enkripsi, kita kasih spasi biar enak dibaca manusia
             if method == "BINARY": return ' '.join(format(ord(char), '08b') for char in text)
             if method == "HEX": return text.encode('utf-8').hex().upper()
             if method == "BASE64": return base64.b64encode(text.encode('utf-8')).decode('utf-8')
             if method == "REVERSE": return text[::-1]
-        else: # DECRYPT
-            if method == "BINARY": return ''.join(chr(int(b, 2)) for b in text.split(' '))
+        
+        else: # DECRYPT MODE
+            if method == "BINARY":
+                # [FIX] Hapus semua spasi dulu (cleaning input)
+                clean_text = text.replace(" ", "").replace("\n", "")
+                
+                # Potong string setiap 8 karakter (8 bit)
+                # Contoh: "0100000101000010" -> ["01000001", "01000010"]
+                byte_chunks = [clean_text[i:i+8] for i in range(0, len(clean_text), 8)]
+                
+                return ''.join(chr(int(b, 2)) for b in byte_chunks)
+
             if method == "HEX": return bytes.fromhex(text).decode('utf-8')
             if method == "BASE64": return base64.b64decode(text.encode('utf-8')).decode('utf-8')
             if method == "REVERSE": return text[::-1]
     except:
-        return "FATAL ERROR"
+        return "FATAL ERROR: DECRYPTION FAILED"
     return text
 
-# --- FUNGSI ANIMASI DECODE (ADAPTASI DARI KODEMU) ---
+# --- FUNGSI ANIMASI DECODE ---
 def render_red_decode(final_text, label):
-    # Sanitize input untuk JS
     safe_text = final_text.replace("'", "\\'").replace("\n", " ")
     
-    # HTML + JS (Vanilla Version of your jQuery code)
     html_code = f"""
     <style>
         body {{
             background: transparent;
             color: #411;
             font-family: Consolas, Courier, monospace;
-            /* Font size disesuaikan agar muat di container */
             font-size: 24px; 
             text-shadow: 0 0 15px #411;
             margin: 0; padding: 0;
@@ -212,7 +220,6 @@ def render_red_decode(final_text, label):
             el.appendChild(span);
         }}
 
-        // Fungsi mengacak huruf
         function write() {{
             var spans = el.getElementsByTagName("span");
             for (var i = letter_count; i < word.length; i++) {{
@@ -224,7 +231,6 @@ def render_red_decode(final_text, label):
             }}
         }}
 
-        // Fungsi mengunci huruf satu per satu
         function inc() {{
             var spans = el.getElementsByTagName("span");
             spans[letter_count].innerHTML = word[letter_count];
@@ -233,11 +239,10 @@ def render_red_decode(final_text, label):
             if (letter_count >= word.length) {{
                 finished = true;
             }} else {{
-                setTimeout(inc, 150); // Kecepatan lock huruf (ms)
+                setTimeout(inc, 100); 
             }}
         }}
 
-        // Jalankan
         write();
         setTimeout(inc, 500); 
     }})();
@@ -262,8 +267,6 @@ if st.button("EXECUTE OVERRIDE"):
     if input_text:
         result = process_text(input_text, method, mode)
         label_text = f"// TARGET: {mode}ED_PAYLOAD"
-        
-        # Panggil animasi JS
         render_red_decode(result, label_text)
     else:
         st.error("NO TARGET DETECTED.")
