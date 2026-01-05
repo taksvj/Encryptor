@@ -120,12 +120,12 @@ st.markdown("""
     .social-link svg {
         width: 24px;
         height: 24px;
-        fill: var(--text); /* Warna default */
+        fill: var(--text);
         opacity: 0.6;
         transition: 0.3s all;
     }
     .social-link:hover svg {
-        fill: var(--mauve); /* Berubah Ungu saat hover */
+        fill: var(--mauve);
         opacity: 1;
         filter: drop-shadow(0 0 8px var(--mauve));
         transform: scale(1.2);
@@ -154,6 +154,7 @@ def process_text(text, method, mode):
             if method == "reverse": return text[::-1]
         else:
             if method == "binary":
+                # Fix: Hapus spasi biar bisa baca binary panjang
                 clean_text = text.replace(" ", "").replace("\n", "")
                 byte_chunks = [clean_text[i:i+8] for i in range(0, len(clean_text), 8)]
                 return ''.join(chr(int(b, 2)) for b in byte_chunks)
@@ -170,7 +171,6 @@ with col2: method = st.selectbox("algorithm", ["binary", "hex", "base64", "rever
 
 input_text = st.text_area("", placeholder="echo 'insert_text_here'...", height=120)
 
-# KITA PAKAI CONTAINER KOSONG DULU
 result_placeholder = st.empty()
 
 if st.button("sh run_process.sh"):
@@ -178,10 +178,7 @@ if st.button("sh run_process.sh"):
         result_text = process_text(input_text, method, mode)
         label_txt = f"stdout >> {method}"
         
-        # SIAPKAN ANIMASI
         displayed_text = ""
-        
-        # Awal: Tampilkan kotak kosong + kursor
         result_placeholder.markdown(f"""
         <div class="hyprland-box">
             <div class="hyprland-label">{label_txt}</div>
@@ -189,7 +186,6 @@ if st.button("sh run_process.sh"):
         </div>
         """, unsafe_allow_html=True)
         
-        # Proses Ngetik (Python Loop)
         for char in result_text:
             displayed_text += char
             result_placeholder.markdown(f"""
@@ -198,23 +194,22 @@ if st.button("sh run_process.sh"):
                 <span class="typed-text">{displayed_text}</span><span class="cursor"></span>
             </div>
             """, unsafe_allow_html=True)
-            
-            # Speed Control
             delay = 0.02 if len(result_text) > 50 else 0.05
             time.sleep(delay)
             
     else:
         st.error("stdin is empty")
 
-# --- FOOTER SOCIAL LINKS ---
+# --- FOOTER SOCIAL LINKS (FIXED SVG) ---
+# Saya ganti pakai SVG yang lebih pendek path-nya biar gak error parser
 st.markdown("""
 <div class="social-bar">
-    <a href="https://x.com/taksvj" target="_blank" class="social-link" title="Follow on X">
+    <a href="https://x.com/taksvj" target="_blank" class="social-link" title="X Profile">
         <svg viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"></path></svg>
     </a>
 
-    <a href="https://github.com/taksvj" target="_blank" class="social-link" title="Check GitHub">
-        <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.419-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+    <a href="https://github.com/taksvj" target="_blank" class="social-link" title="GitHub Profile">
+        <svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
     </a>
 </div>
 """, unsafe_allow_html=True)
