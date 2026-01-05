@@ -1,272 +1,252 @@
 import streamlit as st
 import base64
-import random
-import string
 import time
 
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(
-    page_title="CYBER VAULT // RED CODE",
-    page_icon="🛑",
+    page_title="~/vault",
+    page_icon="",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- GLOBAL CSS & BACKGROUND ---
+# --- HYPRLAND / CATPPUCCIN THEME ---
 st.markdown("""
 <style>
-    /* 1. Reset & Font */
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-    @import url('https://fonts.googleapis.com/css?family=Consolas');
+    /* Import Font: JetBrains Mono (Standard Anak IT) */
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
 
     :root {
-        --red-glow: #f00;
-        --red-dark: #411;
-        --bg-black: #111;
+        /* Catppuccin Mocha Palette */
+        --base: #1e1e2e;
+        --mantle: #181825;
+        --surface0: #313244;
+        --text: #cdd6f4;
+        --blue: #89b4fa;
+        --lavender: #b4befe;
+        --mauve: #cba6f7;
+        --overlay: rgba(30, 30, 46, 0.7);
     }
 
+    /* BACKGROUND WALLPAPER (Abstract Blur) */
     .stApp {
-        background-color: var(--bg-black);
-        font-family: 'Consolas', 'Courier', monospace;
-        color: var(--red-glow);
+        background-color: var(--base);
+        background-image: 
+            radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+            radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+            radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+        background-size: cover;
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--text);
     }
 
-    /* 2. Matrix Canvas (Background) */
-    #matrix-canvas {
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        z-index: 0; opacity: 0.3; pointer-events: none;
-    }
-
-    /* 3. Kontainer Utama */
+    /* CONTAINER UTAMA (Glass Window Style) */
     .main .block-container {
-        z-index: 1; position: relative;
-        background: rgba(17, 0, 0, 0.8);
-        border: 1px solid var(--red-dark);
-        padding: 30px; 
-        box-shadow: 0 0 50px rgba(255, 0, 0, 0.2);
+        background: var(--overlay);
+        backdrop-filter: blur(20px); /* Efek Kaca Buram Khas Hyprland */
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(137, 180, 250, 0.2); /* Border tipis biru */
+        border-radius: 20px; /* Rounded Corners */
+        padding: 40px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         margin-top: 50px;
+        max-width: 700px;
     }
 
-    /* 4. Header Style */
-    .vault-header {
-        text-align: center;
-        font-size: 50px; 
-        font-weight: bold;
-        color: var(--red-glow);
-        text-shadow: 0 0 15px var(--red-glow);
-        margin-bottom: 5px;
-        text-transform: uppercase;
-        font-family: 'Consolas', monospace;
-    }
-    
-    .vault-sub {
-        text-align: center;
-        color: var(--red-dark);
-        text-shadow: 0 0 5px var(--red-dark);
-        font-size: 18px;
+    /* HEADER: Waybar Style */
+    .waybar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--surface0);
+        padding: 10px 20px;
+        border-radius: 15px;
         margin-bottom: 30px;
-        font-family: 'Share Tech Mono', monospace;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    .arch-logo {
+        color: var(--blue);
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    .window-title {
+        color: var(--text);
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    .dots {
+        display: flex;
+        gap: 8px;
+    }
+    .dot {
+        width: 12px; height: 12px;
+        border-radius: 50%;
+    }
+    .dot-red { background: #f38ba8; }
+    .dot-yellow { background: #f9e2af; }
+    .dot-green { background: #a6e3a1; }
+
+    /* INPUT FIELDS (Floating Input) */
+    .stTextArea > div > div > textarea {
+        background-color: var(--mantle) !important;
+        color: var(--text) !important;
+        border: 2px solid var(--surface0) !important;
+        border-radius: 12px;
+        font-family: 'JetBrains Mono', monospace;
+        transition: 0.3s;
+    }
+    .stTextArea > div > div > textarea:focus {
+        border-color: var(--mauve) !important;
+        box-shadow: 0 0 15px rgba(203, 166, 247, 0.2);
     }
 
-    /* 5. Input Fields */
-    .stTextArea > div > div > textarea {
-        background-color: #050000 !important; 
-        color: #f00 !important;
-        border: 1px solid #411 !important;
-        font-family: 'Consolas', monospace;
-        font-size: 1.1rem;
-    }
-    
-    /* 6. Buttons */
+    /* BUTTONS (Pill Shape) */
     .stButton > button {
-        background: #000; 
-        border: 2px solid var(--red-glow); 
-        color: var(--red-glow);
-        font-family: 'Consolas', monospace; 
-        font-weight: bold; 
-        padding: 15px; 
+        background: linear-gradient(135deg, var(--blue), var(--mauve));
+        color: var(--base);
+        border: none;
+        border-radius: 12px;
+        padding: 12px;
+        font-weight: bold;
+        text-transform: lowercase;
+        letter-spacing: 1px;
+        transition: 0.3s all;
         width: 100%;
-        text-transform: uppercase; 
-        transition: 0.3s;
-        font-size: 18px;
-        text-shadow: 0 0 5px var(--red-glow);
     }
     .stButton > button:hover {
-        background: var(--red-glow); 
-        color: #000; 
-        box-shadow: 0 0 30px var(--red-glow);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(137, 180, 250, 0.4);
+        color: white;
+    }
+
+    /* SELECTBOX & RADIO */
+    .stSelectbox > div > div {
+        background-color: var(--mantle) !important;
+        color: var(--text) !important;
+        border-radius: 10px;
+        border: none;
     }
     
-    /* 7. Dropdown */
-    .stSelectbox > div > div {
-        background-color: #050000 !important;
-        color: var(--red-glow) !important;
+    /* ANIMASI DECODE CSS */
+    .output-window {
+        background: #11111b;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        border: 1px solid var(--surface0);
+        position: relative;
     }
+    .output-label {
+        position: absolute;
+        top: -10px; left: 15px;
+        background: var(--mauve);
+        color: var(--base);
+        padding: 2px 10px;
+        border-radius: 5px;
+        font-size: 0.7rem;
+        font-weight: bold;
+    }
+    .decode-text {
+        color: var(--lavender);
+        font-size: 1.1rem;
+        word-wrap: break-word;
+        font-weight: 500;
+    }
+    
+    /* Cursor Effect */
+    .cursor {
+        display: inline-block;
+        width: 8px;
+        height: 1.2em;
+        background: var(--mauve);
+        animation: blink 1s step-end infinite;
+        vertical-align: text-bottom;
+        margin-left: 5px;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
 
-    /* HIDE UI */
+    /* HIDE STREAMLIT UI */
     #MainMenu, footer, header {visibility: hidden;}
+    
 </style>
-
-<canvas id="matrix-canvas"></canvas>
-<script>
-    const canvas = document.getElementById('matrix-canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789SYSTEMFAILURE';
-    const fontSize = 16;
-    const columns = canvas.width / fontSize;
-    const drops = [];
-    for(let x = 0; x < columns; x++) drops[x] = 1;
-
-    function draw() {
-        ctx.fillStyle = 'rgba(17, 0, 0, 0.1)'; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#F00'; 
-        ctx.font = fontSize + 'px Consolas';
-        for(let i = 0; i < drops.length; i++) {
-            const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-            if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
-            drops[i]++;
-        }
-    }
-    setInterval(draw, 33);
-    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
-</script>
 """, unsafe_allow_html=True)
 
-# --- LOGIKA ENKRIPSI (BUG FIX HERE) ---
+# --- HEADER ALA HYPRLAND WINDOW ---
+st.markdown("""
+<div class="waybar-header">
+    <div class="dots">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+    </div>
+    <div class="window-title"> ~/arch/vault/encryptor.sh</div>
+    <div class="arch-logo">HYPR</div>
+</div>
+""", unsafe_allow_html=True)
+
+# --- LOGIKA SYSTEM (Tetap sama, logic kamu udah bener) ---
 def process_text(text, method, mode):
     try:
-        if mode == "ENCRYPT":
-            # Saat enkripsi, kita kasih spasi biar enak dibaca manusia
-            if method == "BINARY": return ' '.join(format(ord(char), '08b') for char in text)
-            if method == "HEX": return text.encode('utf-8').hex().upper()
-            if method == "BASE64": return base64.b64encode(text.encode('utf-8')).decode('utf-8')
-            if method == "REVERSE": return text[::-1]
-        
-        else: # DECRYPT MODE
-            if method == "BINARY":
-                # [FIX] Hapus semua spasi dulu (cleaning input)
+        if mode == "encrypt":
+            if method == "binary": return ' '.join(format(ord(char), '08b') for char in text)
+            if method == "hex": return text.encode('utf-8').hex()
+            if method == "base64": return base64.b64encode(text.encode('utf-8')).decode('utf-8')
+            if method == "reverse": return text[::-1]
+        else: # decrypt
+            if method == "binary":
                 clean_text = text.replace(" ", "").replace("\n", "")
-                
-                # Potong string setiap 8 karakter (8 bit)
-                # Contoh: "0100000101000010" -> ["01000001", "01000010"]
                 byte_chunks = [clean_text[i:i+8] for i in range(0, len(clean_text), 8)]
-                
                 return ''.join(chr(int(b, 2)) for b in byte_chunks)
-
-            if method == "HEX": return bytes.fromhex(text).decode('utf-8')
-            if method == "BASE64": return base64.b64decode(text.encode('utf-8')).decode('utf-8')
-            if method == "REVERSE": return text[::-1]
+            if method == "hex": return bytes.fromhex(text).decode('utf-8')
+            if method == "base64": return base64.b64decode(text.encode('utf-8')).decode('utf-8')
+            if method == "reverse": return text[::-1]
     except:
-        return "FATAL ERROR: DECRYPTION FAILED"
+        return "error: segmentation fault (core dumped)" # Error ala Linux
     return text
 
-# --- FUNGSI ANIMASI DECODE ---
-def render_red_decode(final_text, label):
+# --- FUNGSI ANIMASI OUTPUT (Typewriter Effect) ---
+def render_hyprland_output(final_text, label):
     safe_text = final_text.replace("'", "\\'").replace("\n", " ")
     
     html_code = f"""
-    <style>
-        body {{
-            background: transparent;
-            color: #411;
-            font-family: Consolas, Courier, monospace;
-            font-size: 24px; 
-            text-shadow: 0 0 15px #411;
-            margin: 0; padding: 0;
-            text-align: center;
-        }}
-        .loading-container {{
-            position: relative;
-            text-align: center;
-            margin-top: 20px;
-            word-wrap: break-word;
-        }}
-        .glow {{
-            color: #f00;
-            text-shadow: 0px 0px 10px #f00;
-        }}
-        span {{
-            display: inline-block;
-            padding: 0 2px;
-        }}
-        .label {{
-            color: #411;
-            font-size: 14px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }}
-    </style>
-
-    <div class="label">{label}</div>
-    <div id="loading" class="loading-container">{safe_text}</div>
-
+    <div class="output-window">
+        <div class="output-label">{label}</div>
+        <div id="typewriter" class="decode-text"></div>
+    </div>
+    
     <script>
-    (function() {{
-        var alphabet = new Array("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0");
-        var letter_count = 0;
-        var el = document.getElementById("loading");
-        var word = el.innerText.trim();
-        var finished = false;
-
-        el.innerHTML = "";
-        for (var i = 0; i < word.length; i++) {{
-            var span = document.createElement("span");
-            span.innerHTML = word.charAt(i);
-            el.appendChild(span);
-        }}
-
-        function write() {{
-            var spans = el.getElementsByTagName("span");
-            for (var i = letter_count; i < word.length; i++) {{
-                var c = Math.floor(Math.random() * 36);
-                spans[i].innerHTML = alphabet[c];
-            }}
-            if (!finished) {{
-                setTimeout(write, 75);
+        const text = '{safe_text}';
+        const container = document.getElementById("typewriter");
+        let i = 0;
+        
+        container.innerHTML = '<span class="cursor"></span>';
+        
+        function typeWriter() {{
+            if (i < text.length) {{
+                // Masukkan huruf sebelum kursor
+                container.innerHTML = text.substring(0, i+1) + '<span class="cursor"></span>';
+                i++;
+                setTimeout(typeWriter, 20); // Kecepatan ketik
             }}
         }}
-
-        function inc() {{
-            var spans = el.getElementsByTagName("span");
-            spans[letter_count].innerHTML = word[letter_count];
-            spans[letter_count].classList.add("glow");
-            letter_count++;
-            if (letter_count >= word.length) {{
-                finished = true;
-            }} else {{
-                setTimeout(inc, 100); 
-            }}
-        }}
-
-        write();
-        setTimeout(inc, 500); 
-    }})();
+        typeWriter();
     </script>
     """
-    st.components.v1.html(html_code, height=300, scrolling=True)
+    st.components.v1.html(html_code, height=200, scrolling=True)
 
-
-# --- MAIN UI ---
-st.markdown("<div class='vault-header'>RED CODE</div>", unsafe_allow_html=True)
-st.markdown("<div class='vault-sub'>CRITICAL FAILURE // SYSTEM OVERRIDE</div>", unsafe_allow_html=True)
-
-col1, col2 = st.columns(2)
+# --- UI CONTENT ---
+col1, col2 = st.columns([1, 2])
 with col1:
-    mode = st.selectbox("PROTOCOL", ["ENCRYPT", "DECRYPT"])
+    mode = st.selectbox("mode", ["encrypt", "decrypt"])
 with col2:
-    method = st.selectbox("ALGORITHM", ["BINARY", "HEX", "BASE64", "REVERSE"])
+    method = st.selectbox("algorithm", ["binary", "hex", "base64", "reverse"])
 
-input_text = st.text_area("", placeholder="INSERT MALICIOUS CODE...", height=100)
+input_text = st.text_area("", placeholder="echo 'insert_text_here'...", height=120)
 
-if st.button("EXECUTE OVERRIDE"):
+if st.button("sh run_process.sh"):
     if input_text:
         result = process_text(input_text, method, mode)
-        label_text = f"// TARGET: {mode}ED_PAYLOAD"
-        render_red_decode(result, label_text)
+        label_txt = f"stdout >> {method}"
+        render_hyprland_output(result, label_txt)
     else:
-        st.error("NO TARGET DETECTED.")
+        st.error("stdin is empty")
